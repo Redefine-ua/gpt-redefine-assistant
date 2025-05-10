@@ -22,7 +22,7 @@ app.get("/", (req, res) => {
   res.send("✅ GPT-помощник запущен. Добавь /analyze/:uuid в адрес.");
 });
 
-// Анализ пациента по UUID (только report_metrics)
+// Анализ пациента по UUID
 app.get("/analyze/:uuid", async (req, res) => {
   const uuid = req.params.uuid;
 
@@ -30,7 +30,7 @@ app.get("/analyze/:uuid", async (req, res) => {
     const { data: metrics, error } = await supabase
       .from("report_metrics")
       .select("*")
-      .eq("uuid_patient_id", uuid)
+      .eq("patient_id", uuid)
       .order("date", { ascending: true });
 
     if (error || !metrics) throw new Error("Ошибка при получении данных");
