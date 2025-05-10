@@ -4,7 +4,7 @@ const OpenAI = require("openai");
 require("dotenv").config();
 
 const app = express();
-const port = process.env.PORT || 10000; // Render ждёт 10000
+const port = process.env.PORT || 10000; // Render требует 10000
 
 // 🔗 Подключение к Supabase
 const supabase = createClient(
@@ -25,6 +25,7 @@ app.get("/", (req, res) => {
 // 📊 Анализ по UUID пациента
 app.get("/analyze/:uuid", async (req, res) => {
   const uuid = req.params.uuid;
+  console.log("📥 Получен UUID:", uuid);
 
   try {
     const { data: metrics, error } = await supabase
@@ -32,6 +33,9 @@ app.get("/analyze/:uuid", async (req, res) => {
       .select("*")
       .eq("patient_id", uuid)
       .order("report_date", { ascending: true });
+
+    console.log("📊 METRICS:", metrics);
+    if (error) console.error("❌ Supabase error:", error);
 
     if (error || !metrics || metrics.length === 0) {
       throw new Error("Данные не найдены или ошибка Supabase");
@@ -51,11 +55,12 @@ ${JSON.stringify(metrics, null, 2)}
 
     res.send(response.choices[0].message.content);
   } catch (err) {
+    console.error("🚨 Ошибка:", err.message);
     res.status(500).send("❌ Ошибка при анализе данных: " + err.message);
   }
 });
 
 // 🚀 Запуск сервера
 app.listen(port, () => {
-  console.log(`Сервер запущен на http://localhost:${port}`);
+  console.log(`✅ Сервер запущен на http://localhost:${port}`);
 });
