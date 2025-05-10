@@ -25,29 +25,21 @@ app.get("/", (req, res) => {
 // Анализ пациента по UUID
 app.get("/analyze/:uuid", async (req, res) => {
   const uuid = req.params.uuid;
+
   try {
-    const { data: metrics, error: err1 } = await supabase
+    const { data: metrics, error } = await supabase
       .from("report_metrics")
       .select("*")
-      .eq("patient_id", uuid)
+      .eq("uuid_patient_id", uuid)
       .order("date", { ascending: true });
 
-    const { data: reports, error: err2 } = await supabase
-      .from("reports")
-      .select("*")
-      .eq("patient_id", uuid)
-      .order("date", { ascending: true });
-
-    if (err1 || err2) throw new Error("Ошибка при получении данных");
+    if (error) throw new Error("Ошибка при получении данных из report_metrics");
 
     const prompt = `
-На основе следующих данных сформируй отчет о динамике восстановления пациента за последнюю неделю. Раздели его на блоки: психологический, диетологический, телесный, поведенческий. Затем сделай общий вывод и рекомендации.
+На основе следующих метрик пациента за последнюю неделю сформируй отчёт о динамике восстановления. Раздели его на блоки: психологический, диетологический, телесный, поведенческий. Затем сделай общий вывод и рекомендации.
 
 МЕТРИКИ:
 ${JSON.stringify(metrics, null, 2)}
-
-КОММЕНТАРИИ СПЕЦИАЛИСТОВ:
-${JSON.stringify(reports, null, 2)}
     `;
 
     const chat = await openai.chat.completions.create({
