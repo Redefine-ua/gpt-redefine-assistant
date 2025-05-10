@@ -1,28 +1,3 @@
-const express = require("express");
-const { createClient } = require("@supabase/supabase-js");
-const OpenAI = require("openai");
-require("dotenv").config();
-
-const app = express();
-const port = process.env.PORT || 3000;
-
-// Подключение к Supabase
-const supabase = createClient(
-  process.env.SUPABASE_URL,
-  process.env.SUPABASE_KEY
-);
-
-// Подключение к OpenAI
-const openai = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY,
-});
-
-// Главная страница
-app.get("/", (req, res) => {
-  res.send("✅ GPT-помощник запущен. Добавь /analyze/:uuid в адрес.");
-});
-
-// Анализ пациента по UUID
 app.get("/analyze/:uuid", async (req, res) => {
   const uuid = req.params.uuid;
 
@@ -33,10 +8,10 @@ app.get("/analyze/:uuid", async (req, res) => {
       .eq("uuid_patient_id", uuid)
       .order("date", { ascending: true });
 
-    if (error) throw new Error("Ошибка при получении данных из report_metrics");
+    if (error || !metrics) throw new Error("Ошибка при получении данных");
 
     const prompt = `
-На основе следующих метрик пациента за последнюю неделю сформируй отчёт о динамике восстановления. Раздели его на блоки: психологический, диетологический, телесный, поведенческий. Затем сделай общий вывод и рекомендации.
+На основе следующих данных сформируй отчет о динамике восстановления пациента за последнюю неделю. Раздели его на блоки: психологический, диетологический, телесный, поведенческий. Затем сделай общий вывод и рекомендации.
 
 МЕТРИКИ:
 ${JSON.stringify(metrics, null, 2)}
@@ -51,8 +26,4 @@ ${JSON.stringify(metrics, null, 2)}
   } catch (error) {
     res.status(500).send("❌ Ошибка при анализе данных: " + error.message);
   }
-});
-
-app.listen(port, () => {
-  console.log(`Сервер запущен на http://localhost:${port}`);
 });
